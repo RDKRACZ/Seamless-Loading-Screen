@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.realms.gui.screen.RealmsMainScreen;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.Screenshooter;
+import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -64,7 +64,7 @@ public class FinishQuit extends Screen {
             prevHeight = client.getWindow().getFramebufferHeight();
             resizeScreen(client, Config.resolution.width, Config.resolution.height);
         }
-        client.openScreen(new FinishQuit());
+        client.setScreen(new FinishQuit());
     }
 
     @Override
@@ -73,18 +73,18 @@ public class FinishQuit extends Screen {
 
         String name = ScreenshotLoader.getFileName();
 
-        NativeImage nativeImage = Screenshooter.takeScreenshot(0, 0, client.getFramebuffer()); //width and height args do nothing
+        NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(client.getFramebuffer()); //width and height args do nothing
 
         try {
-            nativeImage.writeFile(new File(name));
+            nativeImage.writeTo(new File(name));
             if (Config.archiveScreenshots)
-                nativeImage.writeFile(new File("screenshots/worlds/archive/" + name.substring(name.lastIndexOf("/"), name.length()-4) + "_" +  new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(new Date()) + ".png"));
+                nativeImage.writeTo(new File("screenshots/worlds/archive/" + name.substring(name.lastIndexOf("/"), name.length()-4) + "_" +  new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(new Date()) + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         if (Config.updateWorldIcon && client.isInSingleplayer())
-            updateIcon(client.getServer().getIconFile(), nativeImage);
+            updateIcon(client.getServer().getIconFile().get().toFile(), nativeImage);
 
 
         client.options.hudHidden = hudHidden;
@@ -122,11 +122,11 @@ public class FinishQuit extends Screen {
             client.disconnect();
 
         if (isRealms)
-            client.openScreen(new RealmsMainScreen(new TitleScreen()));
+            client.setScreen(new RealmsMainScreen(new TitleScreen()));
         else if (isSinglePlayer)
-            client.openScreen(new TitleScreen());
+            client.setScreen(new TitleScreen());
         else
-            client.openScreen(new MultiplayerScreen(new TitleScreen()));
+            client.setScreen(new MultiplayerScreen(new TitleScreen()));
     }
 
     private static void updateIcon(File iconFile, NativeImage nativeImage) {
@@ -145,7 +145,7 @@ public class FinishQuit extends Screen {
 
             try(NativeImage nativeImage2 = new NativeImage(64, 64, false)) {
                 nativeImage.resizeSubRectTo(k, l, i, j, nativeImage2);
-                nativeImage2.writeFile(iconFile);
+                nativeImage2.writeTo(iconFile);
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
